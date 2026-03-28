@@ -64,4 +64,3 @@ class ChessBoard:
 if __name__ == "__main__":
     chess_board = ChessBoard()
     chess_board.populate()
-    print(chess_board.board())

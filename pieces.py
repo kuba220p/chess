@@ -8,10 +8,10 @@ class Piece:
         return self._color
     
     def x(self) -> int:
-        return self._pos[0]
+        return self._pos[1]
     
     def y(self) -> int:
-        return self._pos[1]
+        return self._pos[0]
     
     def offset(self, offset: tuple[int, int]) -> tuple[int, int]:
         return (self.x() + offset, self.y() + offset)
