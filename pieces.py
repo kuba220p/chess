@@ -1,3 +1,5 @@
+import numpy as np
+
 class Piece:
     def __init__(self, color: str, start_pos: tuple[int, int]):
         self._color = color
@@ -8,15 +10,15 @@ class Piece:
         return self._color
     
     def x(self) -> int:
-        return self._pos[1]
-    
-    def y(self) -> int:
         return self._pos[0]
     
-    def offset(self, offset: tuple[int, int]) -> tuple[int, int]:
-        return (self.x() + offset, self.y() + offset)
+    def y(self) -> int:
+        return self._pos[1]
     
-    def movement(self) -> list[tuple[int, int]]:
+    def offset(self, x_offset, y_offset) -> tuple[int, int]:
+        return (self.x() + x_offset, self.y() + y_offset)
+    
+    def movement(self, current_layout: np.ndarray) -> list[tuple[int, int]]:
         raise NotImplementedError
     
     def start_pos(self) -> tuple[int, int]:
@@ -32,22 +34,24 @@ class Piece:
 class Pawn(Piece):
     def __init__(self, color: str, start_pos: tuple[int, int]) -> None:
         super().__init__(color, start_pos)
-        self._dy = -1 if self.color() == "black" else 1
+        self._dy = 1 if self.color() == "black" else -1
         
     def dy(self) -> int:
         return self._dy
         
-    def movement(self) -> list[tuple[int, int]]:
+    def movement(self, current_layout: np.ndarray) -> list[tuple[int, int]]:
         possible_moves = [
-            self.offset(0, self.dy()),
-            self.offset(-1, self.dy()),
-            self.offset(1, self.dy())
+            self.offset(self.dy(), 0),
+            self.offset(self.dy() * 2, 1),
+            self.offset(self.dy() * 2, -1)
         ]
         
         if self.start_pos() == self.current_pos():
-            possible_moves.append(self.offset(0, self.dy() * 2))
+            possible_moves.append(self.offset(self.dy() * 2, 0))
+        
+        on_board_moves = super().filter_moves(possible_moves)   
             
-        return self.filter_moves(possible_moves)
+        return on_board_moves
     
     def __repr__(self) -> str:
         return f"{self.color()} Pawn"
@@ -57,21 +61,24 @@ class Rook(Piece):
     def __init__(self, color: str, start_pos: tuple[int, int]) -> None:
         super().__init__(color, start_pos)
         
-    def movement(self) -> list[tuple[int, int]]:
+    def movement(self, current_layout: np.ndarray) -> list[tuple[int, int]]:
         possible_x = [self.offset(offset, 0) for offset in range(-8, 9, 1)]
         possible_y = [self.offset(0, offset) for offset in range(-8, 9, 1)]
         
         possible_moves = possible_x + possible_y
-        return self.filter_moves(possible_moves)
+        on_board_moves = super().filter_moves(possible_moves)
+        self.filter_moves(on_board_moves, current_layout)
+        return on_board_moves
     
     def __repr__(self) -> str:
         return f"{self.color()} Rook"
+    
     
 class Knight(Piece):
     def __init__(self, color: str, start_pos: tuple[int, int]) -> None:
         super().__init__(color, start_pos)
         
-    def movement(self) -> list[tuple[int, int]]:
+    def movement(self, current_layout: np.ndarray) -> list[tuple[int, int]]:
         possible_moves = [
             self.offset(-1, 2),
             self.offset(-2, 1),
@@ -83,7 +90,8 @@ class Knight(Piece):
             self.offset(1, 2)
         ]
         
-        return self.filter_moves(possible_moves)
+        on_board_moves = super().filter_moves(possible_moves) 
+        return on_board_moves
     
     def __repr__(self):
         return f"{self.color()} Knight"
@@ -92,11 +100,13 @@ class Bishop(Piece):
     def __init__(self, color: str, start_pos: tuple[int, int]) -> None:
         super().__init__(color, start_pos)
         
-    def movement(self):
-        possible_1 = [self.offset(-offset, offset) for offset in range(-8, 9, 1)]
+    def movement(self, current_layout: np.ndarray):
+        possible_1 = [self.offset(offset, offset) for offset in range(-8, 9, 1)]
         possible_2 = [self.offset(offset, -offset) for offset in range(-8, 9, 1)]
-
-        return self.filter_moves(possible_1 + possible_2)
+        possible_moves = possible_1 + possible_2
+        
+        on_board_moves = super().filter_moves(possible_moves) 
+        return on_board_moves
     
     def __repr__(self) -> str:
         return f"{self.color()} Bishop"
@@ -105,10 +115,13 @@ class Queen(Bishop):
     def __init__(self, color: str, start_pos: tuple[int, int]) -> None:
         super().__init__(color, start_pos)
         
-    def movement(self):
+    def movement(self, current_layout: np.ndarray):
         possible_x = [self.offset(offset, 0) for offset in range(-8, 9, 1)]
         possible_y = [self.offset(0, offset) for offset in range(-8, 9, 1)]
-        return super().movement() + self.filter_moves(possible_x + possible_y)
+        possible_moves = possible_x + possible_y
+        on_board_moves = super().filter_moves(possible_moves)
+
+        return super().movement(current_layout) + on_board_moves 
     
     def __repr__(self) -> str:
         return f"{self.color()} Queen"
@@ -117,7 +130,7 @@ class King(Piece):
     def __init__(self, color: str, start_pos: tuple[int, int]) -> None:
         super().__init__(color, start_pos)
         
-    def movement(self):
+    def movement(self, current_layout: np.ndarray):
         possible_moves = [
             self.offset(1, 0),
             self.offset(1, 1),
@@ -129,7 +142,9 @@ class King(Piece):
             self.offset(1, -1)
         ]
         
-        return self.filter_moves(possible_moves)
+        on_board_moves = super().filter_moves(possible_moves)
+
+        return  on_board_moves
     
     def __repr__(self) -> str:
         return f"{self.color()} King"

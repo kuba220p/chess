@@ -1,12 +1,7 @@
 import numpy as np
 from pieces import Pawn, King, Knight, Queen, Bishop, Rook, Piece
 
-
-
-class ChessBoard:
-    def __init__(self) -> None:
-        self._board = np.empty((8, 8), dtype=object)
-        self._initial_positions = {
+_INITIAL_POSITIONS = {
             (0, 0): {"class": Rook, "color": "black"},
             (0, 1): {"class": Knight, "color": "black"},
             (0, 2): {"class": Bishop, "color": "black"},
@@ -42,25 +37,20 @@ class ChessBoard:
             (6, 7): {"class": Pawn, "color": "white"},
         }
 
+class ChessBoard:
+    def __init__(self, board: np.ndarray) -> None:
+        self._board = board
+
     def board(self) -> np.ndarray:
         return self._board
-    
-    def set_piece(self, pos: tuple[int, int], piece: Piece) -> None:
-        board = self.board()
-        board[pos[0], pos[1]] = piece
-    
-    def initial_positions(self) -> dict:
-        return self._initial_positions
-    
-    def populate(self) -> None:
-        for pos, keys in self.initial_positions().items():
+     
+    @classmethod
+    def populate(cls) -> "ChessBoard":
+        board = np.empty((8, 8), dtype=object)
+        for pos, keys in _INITIAL_POSITIONS.items():
             piece_class: Piece = keys["class"]
             color = keys["color"]
+
+            board[pos[0], pos[1]] = piece_class(color, pos)
             
-            piece_object = piece_class(color, pos)
-            self.set_piece(pos, piece_object)
-
-
-if __name__ == "__main__":
-    chess_board = ChessBoard()
-    chess_board.populate()
+        return cls(board)
