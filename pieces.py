@@ -67,7 +67,6 @@ class Rook(Piece):
         
         possible_moves = possible_x + possible_y
         on_board_moves = super().filter_moves(possible_moves)
-        self.filter_moves(on_board_moves, current_layout)
         return on_board_moves
     
     def __repr__(self) -> str:
