@@ -27,9 +27,11 @@ class Piece:
     def current_pos(self) -> tuple[int, int]:
         return self._pos
     
+    def register_movement(self, new_pos: tuple[int, int]) -> None:
+        self._pos = new_pos
+    
     def remove_off_board_moves(self, moves: list[tuple[int, int]]) -> list[tuple[int, int]]:
-        current_pos = self.current_pos()
-        return [move for move in moves if (0 <= move[0] <= 7 and 0 <= move[1] <= 7 and move != current_pos)]
+        return [move for move in moves if (0 <= move[0] <= 7 and 0 <= move[1] <= 7 and move != self.current_pos())]
 
     def linear_moves(self, current_layout: np.ndarray, y_step: int, x_step: int) -> list[tuple[int, int]]:
         possible_moves: list[tuple[int, int]] = []
@@ -64,10 +66,16 @@ class Pawn(Piece):
         possible_moves = []
         x, y = self.x(), self.y()
         above = y + self.dy()
-        check_above = current_layout[above, x]
+        try:
+            check_above = current_layout[above, x]
+        except:
+            check_above = True
         if check_above is None:
             possible_moves.append((above, x))
-            check_above_two = current_layout[above + self.dy(), x]
+            try:
+                check_above_two = current_layout[above + self.dy(), x]
+            except:
+                check_above_two = True
             if check_above_two is None and self.start_pos() == self.current_pos():
                 possible_moves.append((above + self.dy(), x))
 
@@ -79,7 +87,10 @@ class Pawn(Piece):
         
         right = x + 1
         if right <= 7:
-            check_capture = current_layout[above, right]
+            try:
+                check_capture = current_layout[above, right]
+            except:
+                check_capture = None
             if check_capture is not None and check_capture.color() != self.color():
                 possible_moves.append((above, right))
             
@@ -87,8 +98,7 @@ class Pawn(Piece):
     
     def __repr__(self) -> str:
         return f"{self.color()} Pawn"
-    
-    
+     
 class Rook(Piece):
     def __init__(self, color: str, start_pos: tuple[int, int]) -> None:
         super().__init__(color, start_pos)
@@ -110,8 +120,7 @@ class Rook(Piece):
              
     def __repr__(self) -> str:
         return f"{self.color()} Rook"
-    
-    
+       
 class Knight(Piece):
     def __init__(self, color: str, start_pos: tuple[int, int]) -> None:
         super().__init__(color, start_pos)
@@ -176,14 +185,14 @@ class Queen(Bishop):
         
     def movement(self, current_layout: np.ndarray):
         possible_moves = super().movement(current_layout)
-        rook_directions = [
+        directions = [
             (0, 1),
             (0, -1),
             (1, 0),
             (-1, 0)
         ]
 
-        for y_step, x_step in rook_directions:
+        for y_step, x_step in directions:
             possible_moves.extend(self.linear_moves(current_layout, y_step, x_step))
 
         return possible_moves
